@@ -13,26 +13,37 @@ public class EmployeeRepository {
 
     private HashOperations hashOperations;//crud hash
 
+    private ListOperations listOperations;//curd list
+
     private RedisTemplate redisTemplate;
 
     public EmployeeRepository(RedisTemplate redisTemplate) {
-
-        this.hashOperations = redisTemplate.opsForHash();
+//        this.hashOperations = redisTemplate.opsForHash();//hash
+        this.listOperations = redisTemplate.opsForList();//list
         this.redisTemplate = redisTemplate;
 
     }
 
     public void saveEmployee(Employee employee){
+//        hashOperations.put("EMPLOYEE", employee.getId(), employee);//hash
+        listOperations.leftPush("EMPLOYEE",employee);//list
 
-        hashOperations.put("EMPLOYEE", employee.getId(), employee);
     }
     public List<Employee> findAll(){
-
-        return hashOperations.values("EMPLOYEE");
+//        return hashOperations.values("EMPLOYEE");
+        return listOperations.range("EMPLOYEE",0,listOperations.size("EMPLOYEE"));
     }
     public Employee findById(Integer id){
-
-        return (Employee) hashOperations.get("EMPLOYEE", id);
+//        return (Employee) hashOperations.get("EMPLOYEE", id);//hash
+        //list
+        List<Employee> list = listOperations.range("EMPLOYEE",0,listOperations.size("EMPLOYEE"));
+        for (Employee employee : list){
+            if(employee.getId()==id){
+                return employee;
+            }
+        }
+        return null;
+        //
     }
 
     public void update(Employee employee){
@@ -40,6 +51,7 @@ public class EmployeeRepository {
     }
 
     public void delete(Integer id){
-        hashOperations.delete("EMPLOYEE", id);
+//        hashOperations.delete("EMPLOYEE", id);//hash
+        listOperations.rightPopAndLeftPush("EMPLOYEE",id);//list
     }
 }
